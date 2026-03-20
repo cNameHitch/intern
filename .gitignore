@@ -1,0 +1,44 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Swift
+macos-app/.build/
+macos-app/build/
+macos-app/.swiftpm/
+
+# macOS
+.DS_Store
+**/.DS_Store
+*.xcuserstate
+xcuserdata/
+
+# Loop Commander runtime data
+.loop-commander/
+*.db
+*.db-wal
+*.db-shm
+daemon.sock
+daemon.pid
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Build artifacts
+dist/
+*.tar.gz
+*.zip
+*.dmg
+
+# Claude Code internal state
+.claude/
