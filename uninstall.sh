@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Loop Commander — uninstall.sh
-# https://github.com/anthropics/loop-commander
+# https://github.com/cNameHitch/loop-commander
 #
 # Removes Loop Commander CLI binaries, the macOS app bundle, and optionally
 # the ~/.loop-commander/ data directory.
@@ -240,5 +240,5 @@ if grep -qr "\.local/bin" "${HOME}/.zshrc" "${HOME}/.bash_profile" "${HOME}/.pro
 fi
 
 printf "Thank you for using Loop Commander.\n"
-printf "https://github.com/anthropics/loop-commander\n"
+printf "https://github.com/cNameHitch/loop-commander\n"
 printf "\n"

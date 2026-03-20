@@ -44,7 +44,7 @@ Automate repetitive code tasks that Claude excels at: PR reviews, error log anal
 Install the latest release with a single command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anthropics/loop-commander/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/cNameHitch/loop-commander/main/install.sh | bash
 ```
 
 This installs the CLI binaries to `~/.local/bin/` and the macOS app to `~/Applications/`. The installer verifies SHA256 checksums before installing.
@@ -53,16 +53,16 @@ Options:
 
 ```bash
 # Install a specific version
-curl -fsSL https://raw.githubusercontent.com/anthropics/loop-commander/main/install.sh | bash -s -- --version v0.1.0
+curl -fsSL https://raw.githubusercontent.com/cNameHitch/loop-commander/main/install.sh | bash -s -- --version v0.1.0
 
 # Install CLI only (skip the macOS app)
-curl -fsSL https://raw.githubusercontent.com/anthropics/loop-commander/main/install.sh | bash -s -- --cli-only
+curl -fsSL https://raw.githubusercontent.com/cNameHitch/loop-commander/main/install.sh | bash -s -- --cli-only
 ```
 
 To uninstall:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anthropics/loop-commander/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/cNameHitch/loop-commander/main/uninstall.sh | bash
 ```
 
 The uninstall script stops the daemon, removes launchd plists, deletes binaries and the app, and prompts before removing data.
@@ -70,7 +70,7 @@ The uninstall script stops the daemon, removes launchd plists, deletes binaries 
 ### Build from Source
 
 ```bash
-git clone https://github.com/anthropics/loop-commander.git
+git clone https://github.com/cNameHitch/loop-commander.git
 cd loop-commander
 
 # Build Rust daemon, runner, and CLI

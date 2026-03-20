@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Loop Commander — install.sh
-# https://github.com/anthropics/loop-commander
+# https://github.com/cNameHitch/loop-commander
 #
 # Installs the Loop Commander CLI binaries and macOS app from GitHub Releases.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/anthropics/loop-commander/main/install.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/anthropics/loop-commander/main/install.sh | bash -s -- --version v1.2.0
-#   curl -fsSL https://raw.githubusercontent.com/anthropics/loop-commander/main/install.sh | bash -s -- --cli-only
+#   curl -fsSL https://raw.githubusercontent.com/cNameHitch/loop-commander/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/cNameHitch/loop-commander/main/install.sh | bash -s -- --version v1.2.0
+#   curl -fsSL https://raw.githubusercontent.com/cNameHitch/loop-commander/main/install.sh | bash -s -- --cli-only
 
 set -euo pipefail
 
@@ -15,7 +15,7 @@ set -euo pipefail
 # Constants
 # ---------------------------------------------------------------------------
 
-REPO="anthropics/loop-commander"
+REPO="cNameHitch/loop-commander"
 GITHUB_API="https://api.github.com/repos/${REPO}/releases/latest"
 GITHUB_RELEASES="https://github.com/${REPO}/releases/download"
 
