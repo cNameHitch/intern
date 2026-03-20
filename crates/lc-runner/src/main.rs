@@ -48,8 +48,7 @@ async fn main() -> Result<()> {
 
     // ── Step 3: Load LcPaths, read task YAML ────────────
     let paths = LcPaths::new();
-    let config_manager =
-        ConfigManager::new(paths).context("failed to initialize ConfigManager")?;
+    let config_manager = ConfigManager::new(paths).context("failed to initialize ConfigManager")?;
 
     let global_config = config_manager.global_config().clone();
 
@@ -64,8 +63,8 @@ async fn main() -> Result<()> {
     );
 
     // ── Step 4: Open SQLite DB via Logger ────────────────
-    let logger = Logger::new(&config_manager.paths().db_file)
-        .context("failed to open SQLite database")?;
+    let logger =
+        Logger::new(&config_manager.paths().db_file).context("failed to open SQLite database")?;
 
     // ── Step 5: Concurrency check ───────────────────────
     // Use a directory-based counting semaphore under ~/.loop-commander/locks/.
@@ -216,20 +215,20 @@ async fn execute_task(
     task_id: &str,
     task: &lc_core::Task,
     command_argv: &[String],
-) -> (
-    ExecStatus,
-    i32,
-    String,
-    String,
-    u64,
-    chrono::DateTime<Utc>,
-) {
+) -> (ExecStatus, i32, String, String, u64, chrono::DateTime<Utc>) {
     let started_at = Utc::now();
 
     if command_argv.is_empty() {
         error!(task_id = %task_id, "empty command, aborting");
         let now = Utc::now();
-        return (ExecStatus::Failed, 1, String::new(), "Empty command".to_string(), 0, now);
+        return (
+            ExecStatus::Failed,
+            1,
+            String::new(),
+            "Empty command".to_string(),
+            0,
+            now,
+        );
     }
 
     // Resolve working directory.
@@ -284,7 +283,14 @@ async fn execute_task(
     let finished_at = Utc::now();
     let duration_secs = (finished_at - started_at).num_seconds().unsigned_abs();
 
-    (exec_status, exit_code, stdout_str, stderr_str, duration_secs, finished_at)
+    (
+        exec_status,
+        exit_code,
+        stdout_str,
+        stderr_str,
+        duration_secs,
+        finished_at,
+    )
 }
 
 /// Spawn the child process and wait for it to complete.
@@ -373,24 +379,22 @@ fn resolve_executable(cmd: &str) -> String {
     let mut candidates: Vec<PathBuf> = Vec::new();
 
     // Try HOME env var first, then fall back to /Users/<user> on macOS.
-    let home_dir = std::env::var("HOME")
-        .map(PathBuf::from)
-        .or_else(|_| {
-            // launchd may not set HOME; fall back to passwd entry via id -un.
-            std::process::Command::new("/usr/bin/id")
-                .arg("-un")
-                .output()
-                .ok()
-                .and_then(|o| {
-                    let user = String::from_utf8_lossy(&o.stdout).trim().to_string();
-                    if user.is_empty() {
-                        None
-                    } else {
-                        Some(PathBuf::from(format!("/Users/{user}")))
-                    }
-                })
-                .ok_or(())
-        });
+    let home_dir = std::env::var("HOME").map(PathBuf::from).or_else(|_| {
+        // launchd may not set HOME; fall back to passwd entry via id -un.
+        std::process::Command::new("/usr/bin/id")
+            .arg("-un")
+            .output()
+            .ok()
+            .and_then(|o| {
+                let user = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                if user.is_empty() {
+                    None
+                } else {
+                    Some(PathBuf::from(format!("/Users/{user}")))
+                }
+            })
+            .ok_or(())
+    });
 
     if let Ok(home) = home_dir {
         candidates.push(home.join(".local/bin").join(cmd));
@@ -502,12 +506,7 @@ fn count_lock_files(dir: &Path) -> u32 {
     #[allow(clippy::cast_possible_truncation)]
     let count = entries
         .filter_map(std::result::Result::ok)
-        .filter(|e| {
-            e.path()
-                .extension()
-                .and_then(|ext| ext.to_str())
-                == Some("lock")
-        })
+        .filter(|e| e.path().extension().and_then(|ext| ext.to_str()) == Some("lock"))
         .count() as u32;
 
     count

@@ -64,16 +64,13 @@ async fn main() -> Result<()> {
     let config_paths = LcPaths::new();
     let scheduler_paths = LcPaths::new();
 
-    let config = ConfigManager::new(config_paths)
-        .context("Failed to initialize ConfigManager")?;
+    let config = ConfigManager::new(config_paths).context("Failed to initialize ConfigManager")?;
 
     let max_concurrent = config.global_config().max_concurrent_tasks;
 
-    let logger = Logger::new(&paths.db_file)
-        .context("Failed to initialize Logger")?;
+    let logger = Logger::new(&paths.db_file).context("Failed to initialize Logger")?;
 
-    let scheduler = Scheduler::new(scheduler_paths)
-        .context("Failed to initialize Scheduler")?;
+    let scheduler = Scheduler::new(scheduler_paths).context("Failed to initialize Scheduler")?;
 
     let config = Arc::new(Mutex::new(config));
     let logger = Arc::new(Mutex::new(logger));
@@ -123,13 +120,12 @@ async fn main() -> Result<()> {
             }
             Err(_) => {
                 // Stale socket, remove it.
-                std::fs::remove_file(&paths.socket_path)
-                    .with_context(|| {
-                        format!(
-                            "Failed to remove stale socket at {}",
-                            paths.socket_path.display()
-                        )
-                    })?;
+                std::fs::remove_file(&paths.socket_path).with_context(|| {
+                    format!(
+                        "Failed to remove stale socket at {}",
+                        paths.socket_path.display()
+                    )
+                })?;
                 info!("Removed stale socket file");
             }
         }

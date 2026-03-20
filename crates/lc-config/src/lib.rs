@@ -2,9 +2,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use chrono::Utc;
-use lc_core::{
-    CreateTaskInput, LcError, LcPaths, Task, TaskId, TaskStatus, UpdateTaskInput,
-};
+use lc_core::{CreateTaskInput, LcError, LcPaths, Task, TaskId, TaskStatus, UpdateTaskInput};
 // Re-export Schedule for consumers of this crate.
 pub use lc_core::Schedule;
 use serde::{Deserialize, Serialize};
@@ -129,9 +127,9 @@ impl ConfigManager {
     /// Returns an error if the config file exists but cannot be read or parsed,
     /// or if directory creation fails.
     pub fn new(paths: LcPaths) -> Result<Self, LcError> {
-        paths.ensure_dirs().map_err(|e| {
-            LcError::Config(format!("Failed to create directories: {e}"))
-        })?;
+        paths
+            .ensure_dirs()
+            .map_err(|e| LcError::Config(format!("Failed to create directories: {e}")))?;
 
         let global = if paths.config_file.exists() {
             let content = std::fs::read_to_string(&paths.config_file).map_err(|e| {
@@ -148,9 +146,8 @@ impl ConfigManager {
             })?
         } else {
             let config = GlobalConfig::default();
-            let content = serde_yaml::to_string(&config).map_err(|e| {
-                LcError::Config(format!("Failed to serialize default config: {e}"))
-            })?;
+            let content = serde_yaml::to_string(&config)
+                .map_err(|e| LcError::Config(format!("Failed to serialize default config: {e}")))?;
             atomic_write(&paths.config_file, content.as_bytes())?;
             tracing::info!("Created default config at {}", paths.config_file.display());
             config
@@ -175,11 +172,13 @@ impl ConfigManager {
     ///
     /// Returns an error if serialization or file writing fails.
     pub fn save_global_config(&self) -> Result<(), LcError> {
-        let content = serde_yaml::to_string(&self.global).map_err(|e| {
-            LcError::Config(format!("Failed to serialize config: {e}"))
-        })?;
+        let content = serde_yaml::to_string(&self.global)
+            .map_err(|e| LcError::Config(format!("Failed to serialize config: {e}")))?;
         atomic_write(&self.paths.config_file, content.as_bytes())?;
-        tracing::debug!("Saved global config to {}", self.paths.config_file.display());
+        tracing::debug!(
+            "Saved global config to {}",
+            self.paths.config_file.display()
+        );
         Ok(())
     }
 
@@ -226,10 +225,7 @@ impl ConfigManager {
             let content = match std::fs::read_to_string(&path) {
                 Ok(c) => c,
                 Err(e) => {
-                    warnings.push(format!(
-                        "Failed to read {}: {e}",
-                        path.display()
-                    ));
+                    warnings.push(format!("Failed to read {}: {e}", path.display()));
                     continue;
                 }
             };
@@ -237,10 +233,7 @@ impl ConfigManager {
             match serde_yaml::from_str::<Task>(&content) {
                 Ok(task) => tasks.push(task),
                 Err(e) => {
-                    warnings.push(format!(
-                        "Failed to parse {}: {e}",
-                        path.display()
-                    ));
+                    warnings.push(format!("Failed to parse {}: {e}", path.display()));
                 }
             }
         }
@@ -303,7 +296,10 @@ impl ConfigManager {
             return Err(LcError::TaskNotFound(id.to_string()));
         }
         std::fs::remove_file(&path).map_err(|e| {
-            LcError::Config(format!("Failed to delete task file {}: {e}", path.display()))
+            LcError::Config(format!(
+                "Failed to delete task file {}: {e}",
+                path.display()
+            ))
         })?;
         tracing::debug!("Deleted task file {}", path.display());
         Ok(())
@@ -332,9 +328,7 @@ impl ConfigManager {
                 .max_budget_per_run
                 .unwrap_or(self.global.default_budget),
             max_turns: input.max_turns.or(Some(self.global.default_max_turns)),
-            timeout_secs: input
-                .timeout_secs
-                .unwrap_or(self.global.default_timeout),
+            timeout_secs: input.timeout_secs.unwrap_or(self.global.default_timeout),
             status: TaskStatus::Active,
             tags: input.tags.unwrap_or_default(),
             created_at: now,
@@ -357,9 +351,7 @@ impl ConfigManager {
             task.skill = update.skill;
         }
         if let Some(schedule) = update.schedule {
-            task.schedule_human = update
-                .schedule_human
-                .unwrap_or_else(|| schedule.to_human());
+            task.schedule_human = update.schedule_human.unwrap_or_else(|| schedule.to_human());
             task.schedule = schedule;
         } else if let Some(schedule_human) = update.schedule_human {
             task.schedule_human = schedule_human;
@@ -459,9 +451,8 @@ fn atomic_write(path: &Path, content: &[u8]) -> Result<(), LcError> {
 /// when the command contains newlines, preserving line breaks exactly.
 fn serialize_task_yaml(task: &Task) -> Result<String, LcError> {
     // Serialize the task normally first
-    let yaml = serde_yaml::to_string(task).map_err(|e| {
-        LcError::Yaml(format!("Failed to serialize task: {e}"))
-    })?;
+    let yaml = serde_yaml::to_string(task)
+        .map_err(|e| LcError::Yaml(format!("Failed to serialize task: {e}")))?;
 
     // If the command contains newlines, rewrite the command field to use
     // block scalar style for readability.
@@ -489,8 +480,7 @@ fn rewrite_command_block_scalar(yaml: &str, command: &str) -> String {
             // We are skipping the original serialized value of the command field.
             // A top-level field is any non-empty line that starts at column 0
             // (no leading whitespace) and contains a colon somewhere.
-            let is_top_level_key =
-                !line.is_empty() && !line.starts_with(' ') && line.contains(':');
+            let is_top_level_key = !line.is_empty() && !line.starts_with(' ') && line.contains(':');
 
             if is_top_level_key {
                 // This is the next field — stop skipping.
@@ -815,7 +805,10 @@ mod tests {
         let tmp_path = mgr.paths.tasks_dir.join(format!("{task_id}.yaml.tmp"));
 
         assert!(yaml_path.exists(), "Final YAML file should exist");
-        assert!(!tmp_path.exists(), "Temp file should not linger after success");
+        assert!(
+            !tmp_path.exists(),
+            "Temp file should not linger after success"
+        );
     }
 
     // ── Multiline command block scalar ───────────────────
@@ -824,7 +817,9 @@ mod tests {
     fn multiline_command_uses_block_scalar() {
         let (tmp, mgr) = setup();
         let mut input = sample_input(tmp.path());
-        input.command = "claude -p 'Review all open PRs.\nCheck for logic errors.\nFix style issues.'".to_string();
+        input.command =
+            "claude -p 'Review all open PRs.\nCheck for logic errors.\nFix style issues.'"
+                .to_string();
         let task = mgr.create_task_from_input(input);
 
         mgr.save_task(&task).unwrap();

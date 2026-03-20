@@ -317,9 +317,8 @@ impl Scheduler {
 
         // Remove plist file.
         if plist_path.exists() {
-            std::fs::remove_file(&plist_path).with_context(|| {
-                format!("Failed to remove plist at {}", plist_path.display())
-            })?;
+            std::fs::remove_file(&plist_path)
+                .with_context(|| format!("Failed to remove plist at {}", plist_path.display()))?;
             debug!(?plist_path, "Removed plist file");
         }
 
@@ -423,7 +422,8 @@ impl Scheduler {
             Schedule::Cron { expression } => {
                 match parse_cron_to_expansion(expression) {
                     Ok(expansion) => match expansion {
-                        CronExpansion::Interval { seconds } => {
+                        CronExpansion::Interval { seconds } =>
+                        {
                             #[allow(clippy::cast_possible_wrap)]
                             plist::Value::Integer((seconds as i64).into())
                         }
@@ -1285,7 +1285,10 @@ mod tests {
         let plist_path = sched.paths.plists_dir.join(&plist_filename);
 
         // Verify file exists.
-        assert!(plist_path.exists(), "Plist file should exist after register");
+        assert!(
+            plist_path.exists(),
+            "Plist file should exist after register"
+        );
 
         // Read it back.
         let file = std::fs::File::open(&plist_path).unwrap();
@@ -1392,7 +1395,9 @@ mod tests {
         sched.register(&task).expect("first register");
 
         // Second register should succeed (replaces stale symlink).
-        sched.register(&task).expect("second register should succeed");
+        sched
+            .register(&task)
+            .expect("second register should succeed");
 
         let label = task.id.launchd_label();
         let plist_filename = format!("{label}.plist");

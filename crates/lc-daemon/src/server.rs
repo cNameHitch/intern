@@ -146,7 +146,13 @@ pub async fn handle_connection(stream: UnixStream, state: Arc<SharedState>) -> R
         }
 
         // Dispatch the request.
-        let response = dispatch(&request.method, request.params.clone(), request.id.clone(), &state).await;
+        let response = dispatch(
+            &request.method,
+            request.params.clone(),
+            request.id.clone(),
+            &state,
+        )
+        .await;
 
         let mut resp_str = serde_json::to_string(&response)?;
         resp_str.push('\n');
@@ -237,11 +243,7 @@ async fn handle_task_get(
     let task_id = match params.get("id").and_then(serde_json::Value::as_str) {
         Some(id_str) => id_str.to_string(),
         None => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                "Invalid params: missing 'id' field".into(),
-            )
+            return JsonRpcResponse::error(id, -32602, "Invalid params: missing 'id' field".into())
         }
     };
 
@@ -251,9 +253,11 @@ async fn handle_task_get(
             Ok(val) => JsonRpcResponse::success(id, val),
             Err(e) => JsonRpcResponse::error(id, -32603, format!("Serialization error: {e}")),
         },
-        Err(lc_core::LcError::TaskNotFound(_)) => {
-            JsonRpcResponse::error(id, rpc_errors::TASK_NOT_FOUND, format!("Task not found: {task_id}"))
-        }
+        Err(lc_core::LcError::TaskNotFound(_)) => JsonRpcResponse::error(
+            id,
+            rpc_errors::TASK_NOT_FOUND,
+            format!("Task not found: {task_id}"),
+        ),
         Err(e) => JsonRpcResponse::error(id, -32603, format!("Internal error: {e}")),
     }
 }
@@ -266,13 +270,7 @@ async fn handle_task_create(
     // Deserialize input.
     let input: CreateTaskInput = match serde_json::from_value(params) {
         Ok(i) => i,
-        Err(e) => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                format!("Invalid params: {e}"),
-            )
-        }
+        Err(e) => return JsonRpcResponse::error(id, -32602, format!("Invalid params: {e}")),
     };
 
     // Validate (CC-3).
@@ -289,11 +287,7 @@ async fn handle_task_create(
 
     // Save YAML.
     if let Err(e) = cfg.save_task(&task) {
-        return JsonRpcResponse::error(
-            id,
-            -32603,
-            format!("Failed to save task: {e}"),
-        );
+        return JsonRpcResponse::error(id, -32603, format!("Failed to save task: {e}"));
     }
 
     // Register and activate in launchd.
@@ -339,13 +333,7 @@ async fn handle_task_update(
     // Deserialize input.
     let input: UpdateTaskInput = match serde_json::from_value(params) {
         Ok(i) => i,
-        Err(e) => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                format!("Invalid params: {e}"),
-            )
-        }
+        Err(e) => return JsonRpcResponse::error(id, -32602, format!("Invalid params: {e}")),
     };
 
     // Validate (CC-3).
@@ -372,9 +360,7 @@ async fn handle_task_update(
                 format!("Task not found: {task_id}"),
             )
         }
-        Err(e) => {
-            return JsonRpcResponse::error(id, -32603, format!("Internal error: {e}"))
-        }
+        Err(e) => return JsonRpcResponse::error(id, -32603, format!("Internal error: {e}")),
     };
 
     let old_status = task.status.to_string();
@@ -384,11 +370,7 @@ async fn handle_task_update(
 
     // Save YAML.
     if let Err(e) = cfg.save_task(&task) {
-        return JsonRpcResponse::error(
-            id,
-            -32603,
-            format!("Failed to save task: {e}"),
-        );
+        return JsonRpcResponse::error(id, -32603, format!("Failed to save task: {e}"));
     }
 
     // Reinstall plist if schedule changed.
@@ -430,11 +412,7 @@ async fn handle_task_delete(
     let task_id = match params.get("id").and_then(serde_json::Value::as_str) {
         Some(id_str) => id_str.to_string(),
         None => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                "Invalid params: missing 'id' field".into(),
-            )
+            return JsonRpcResponse::error(id, -32602, "Invalid params: missing 'id' field".into())
         }
     };
 
@@ -463,9 +441,11 @@ async fn handle_task_delete(
 
             JsonRpcResponse::success(id, serde_json::json!({"deleted": true}))
         }
-        Err(lc_core::LcError::TaskNotFound(_)) => {
-            JsonRpcResponse::error(id, rpc_errors::TASK_NOT_FOUND, format!("Task not found: {task_id}"))
-        }
+        Err(lc_core::LcError::TaskNotFound(_)) => JsonRpcResponse::error(
+            id,
+            rpc_errors::TASK_NOT_FOUND,
+            format!("Task not found: {task_id}"),
+        ),
         Err(e) => JsonRpcResponse::error(id, -32603, format!("Failed to delete task: {e}")),
     }
 }
@@ -478,11 +458,7 @@ async fn handle_task_pause(
     let task_id = match params.get("id").and_then(serde_json::Value::as_str) {
         Some(id_str) => id_str.to_string(),
         None => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                "Invalid params: missing 'id' field".into(),
-            )
+            return JsonRpcResponse::error(id, -32602, "Invalid params: missing 'id' field".into())
         }
     };
 
@@ -535,11 +511,7 @@ async fn handle_task_resume(
     let task_id = match params.get("id").and_then(serde_json::Value::as_str) {
         Some(id_str) => id_str.to_string(),
         None => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                "Invalid params: missing 'id' field".into(),
-            )
+            return JsonRpcResponse::error(id, -32602, "Invalid params: missing 'id' field".into())
         }
     };
 
@@ -596,11 +568,7 @@ async fn handle_task_run_now(
     let task_id = match params.get("id").and_then(serde_json::Value::as_str) {
         Some(id_str) => id_str.to_string(),
         None => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                "Invalid params: missing 'id' field".into(),
-            )
+            return JsonRpcResponse::error(id, -32602, "Invalid params: missing 'id' field".into())
         }
     };
 
@@ -742,11 +710,7 @@ async fn handle_task_dry_run(
     let task_id = match params.get("id").and_then(serde_json::Value::as_str) {
         Some(id_str) => id_str.to_string(),
         None => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                "Invalid params: missing 'id' field".into(),
-            )
+            return JsonRpcResponse::error(id, -32602, "Invalid params: missing 'id' field".into())
         }
     };
 
@@ -819,11 +783,7 @@ async fn handle_task_stop(
     let task_id = match params.get("id").and_then(serde_json::Value::as_str) {
         Some(id_str) => id_str.to_string(),
         None => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                "Invalid params: missing 'id' field".into(),
-            )
+            return JsonRpcResponse::error(id, -32602, "Invalid params: missing 'id' field".into())
         }
     };
 
@@ -834,11 +794,7 @@ async fn handle_task_stop(
                 info!(task_id = %task_id, "Killed running lc-runner process");
                 JsonRpcResponse::success(id, serde_json::json!({"stopped": true}))
             }
-            Err(e) => JsonRpcResponse::error(
-                id,
-                -32603,
-                format!("Failed to kill process: {e}"),
-            ),
+            Err(e) => JsonRpcResponse::error(id, -32603, format!("Failed to kill process: {e}")),
         }
     } else {
         JsonRpcResponse::error(
@@ -857,11 +813,7 @@ async fn handle_task_export(
     let task_id = match params.get("id").and_then(serde_json::Value::as_str) {
         Some(id_str) => id_str.to_string(),
         None => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                "Invalid params: missing 'id' field".into(),
-            )
+            return JsonRpcResponse::error(id, -32602, "Invalid params: missing 'id' field".into())
         }
     };
 
@@ -894,13 +846,7 @@ async fn handle_task_import(
     // Deserialize the TaskExport.
     let export: TaskExport = match serde_json::from_value(params) {
         Ok(e) => e,
-        Err(e) => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                format!("Invalid params: {e}"),
-            )
-        }
+        Err(e) => return JsonRpcResponse::error(id, -32602, format!("Invalid params: {e}")),
     };
 
     // Convert to CreateTaskInput.
@@ -966,13 +912,7 @@ async fn handle_logs_query(
 ) -> JsonRpcResponse {
     let query: LogQuery = match serde_json::from_value(params) {
         Ok(q) => q,
-        Err(e) => {
-            return JsonRpcResponse::error(
-                id,
-                -32602,
-                format!("Invalid params: {e}"),
-            )
-        }
+        Err(e) => return JsonRpcResponse::error(id, -32602, format!("Invalid params: {e}")),
     };
 
     let lgr = state.logger.lock().await;
@@ -989,10 +929,7 @@ async fn handle_logs_query(
     }
 }
 
-async fn handle_metrics_dashboard(
-    id: serde_json::Value,
-    state: &SharedState,
-) -> JsonRpcResponse {
+async fn handle_metrics_dashboard(id: serde_json::Value, state: &SharedState) -> JsonRpcResponse {
     let tasks = {
         let cfg = state.config.lock().await;
         let (tasks, _) = cfg.list_tasks();
@@ -1039,10 +976,7 @@ async fn handle_metrics_cost_trend(
 
 // ── Config ─────────────────────────────────────────────────────
 
-async fn handle_config_get(
-    id: serde_json::Value,
-    state: &SharedState,
-) -> JsonRpcResponse {
+async fn handle_config_get(id: serde_json::Value, state: &SharedState) -> JsonRpcResponse {
     let cfg = state.config.lock().await;
     let global = cfg.global_config();
 
@@ -1062,25 +996,46 @@ async fn handle_config_update(
     // Apply partial updates from the params object.
     let global = cfg.global_config_mut();
 
-    if let Some(v) = params.get("claude_binary").and_then(serde_json::Value::as_str) {
+    if let Some(v) = params
+        .get("claude_binary")
+        .and_then(serde_json::Value::as_str)
+    {
         global.claude_binary = v.to_string();
     }
-    if let Some(v) = params.get("default_budget").and_then(serde_json::Value::as_f64) {
+    if let Some(v) = params
+        .get("default_budget")
+        .and_then(serde_json::Value::as_f64)
+    {
         global.default_budget = v;
     }
-    if let Some(v) = params.get("default_timeout").and_then(serde_json::Value::as_u64) {
+    if let Some(v) = params
+        .get("default_timeout")
+        .and_then(serde_json::Value::as_u64)
+    {
         global.default_timeout = v;
     }
-    if let Some(v) = params.get("default_max_turns").and_then(serde_json::Value::as_u64) {
+    if let Some(v) = params
+        .get("default_max_turns")
+        .and_then(serde_json::Value::as_u64)
+    {
         global.default_max_turns = v as u32;
     }
-    if let Some(v) = params.get("log_retention_days").and_then(serde_json::Value::as_u64) {
+    if let Some(v) = params
+        .get("log_retention_days")
+        .and_then(serde_json::Value::as_u64)
+    {
         global.log_retention_days = v as u32;
     }
-    if let Some(v) = params.get("notifications_enabled").and_then(serde_json::Value::as_bool) {
+    if let Some(v) = params
+        .get("notifications_enabled")
+        .and_then(serde_json::Value::as_bool)
+    {
         global.notifications_enabled = v;
     }
-    if let Some(v) = params.get("max_concurrent_tasks").and_then(serde_json::Value::as_u64) {
+    if let Some(v) = params
+        .get("max_concurrent_tasks")
+        .and_then(serde_json::Value::as_u64)
+    {
         global.max_concurrent_tasks = v as u32;
     }
     if let Some(v) = params.get("daily_budget_cap") {
@@ -1090,7 +1045,10 @@ async fn handle_config_update(
             global.daily_budget_cap = Some(f);
         }
     }
-    if let Some(v) = params.get("cost_estimate_per_second").and_then(serde_json::Value::as_f64) {
+    if let Some(v) = params
+        .get("cost_estimate_per_second")
+        .and_then(serde_json::Value::as_f64)
+    {
         global.cost_estimate_per_second = v;
     }
     if let Some(v) = params.get("theme").and_then(serde_json::Value::as_str) {
@@ -1099,11 +1057,7 @@ async fn handle_config_update(
 
     // Persist to disk.
     if let Err(e) = cfg.save_global_config() {
-        return JsonRpcResponse::error(
-            id,
-            -32603,
-            format!("Failed to save config: {e}"),
-        );
+        return JsonRpcResponse::error(id, -32603, format!("Failed to save config: {e}"));
     }
 
     let global = cfg.global_config();
@@ -1115,10 +1069,7 @@ async fn handle_config_update(
 
 // ── Daemon ─────────────────────────────────────────────────────
 
-async fn handle_daemon_status(
-    id: serde_json::Value,
-    state: &SharedState,
-) -> JsonRpcResponse {
+async fn handle_daemon_status(id: serde_json::Value, state: &SharedState) -> JsonRpcResponse {
     let pid = std::process::id();
     let uptime_secs = state.start_time.elapsed().as_secs();
     let connected_clients = connected_client_count();
@@ -1255,15 +1206,24 @@ mod tests {
         assert!(resp.error.is_none(), "Error must be absent");
         let result = resp.result.unwrap();
         assert_eq!(result.get("valid").and_then(|v| v.as_bool()), Some(true));
-        assert!(result.get("error").is_none(), "error field must be absent on success");
+        assert!(
+            result.get("error").is_none(),
+            "error field must be absent on success"
+        );
     }
 
     #[tokio::test]
     async fn schedule_validate_invalid_expression_returns_valid_false() {
         let params = serde_json::json!({"expression": "not a cron"});
         let resp = handle_schedule_validate(serde_json::json!(1), params).await;
-        assert!(resp.result.is_some(), "Result must be present for invalid cron");
-        assert!(resp.error.is_none(), "JSON-RPC error must be absent for invalid cron");
+        assert!(
+            resp.result.is_some(),
+            "Result must be present for invalid cron"
+        );
+        assert!(
+            resp.error.is_none(),
+            "JSON-RPC error must be absent for invalid cron"
+        );
         let result = resp.result.unwrap();
         assert_eq!(result.get("valid").and_then(|v| v.as_bool()), Some(false));
         let error_msg = result
@@ -1277,7 +1237,10 @@ mod tests {
     async fn schedule_validate_missing_expression_returns_rpc_error() {
         let params = serde_json::json!({});
         let resp = handle_schedule_validate(serde_json::json!(1), params).await;
-        assert!(resp.error.is_some(), "JSON-RPC error expected when expression is missing");
+        assert!(
+            resp.error.is_some(),
+            "JSON-RPC error expected when expression is missing"
+        );
         assert!(resp.result.is_none());
         assert_eq!(resp.error.unwrap().code, -32602);
     }

@@ -701,8 +701,8 @@ pub fn builtin_templates() -> Vec<TaskTemplate> {
         TaskTemplate {
             slug: "pr-review".into(),
             name: "PR Review Sweep".into(),
-            description:
-                "Review all open PRs for logic errors, missing tests, and style issues".into(),
+            description: "Review all open PRs for logic errors, missing tests, and style issues"
+                .into(),
             command: "claude -p 'Review all open PRs in this repo. Check for logic errors, \
                       missing tests, and style violations. Auto-fix what you can, leave \
                       comments on what you cannot.'"
@@ -728,8 +728,8 @@ pub fn builtin_templates() -> Vec<TaskTemplate> {
         TaskTemplate {
             slug: "morning-briefing".into(),
             name: "Morning Briefing".into(),
-            description:
-                "Generate a daily summary of repo activity, open PRs, and failing CI".into(),
+            description: "Generate a daily summary of repo activity, open PRs, and failing CI"
+                .into(),
             command: "claude -p 'Generate a morning briefing: summarize commits from the \
                       last 24h, list open PRs needing review, and report any failing CI \
                       pipelines.'"
@@ -875,10 +875,7 @@ impl From<TaskExport> for CreateTaskInput {
 #[serde(tag = "type", content = "data")]
 pub enum DaemonEvent {
     /// A task execution started (lc-runner spawned).
-    TaskStarted {
-        task_id: String,
-        task_name: String,
-    },
+    TaskStarted { task_id: String, task_name: String },
     /// A task execution completed successfully.
     TaskCompleted {
         task_id: String,
@@ -900,10 +897,7 @@ pub enum DaemonEvent {
         new_status: String,
     },
     /// Health check repaired a launchd discrepancy.
-    HealthRepair {
-        task_id: String,
-        action: String,
-    },
+    HealthRepair { task_id: String, action: String },
     /// A task was skipped due to budget cap.
     BudgetExceeded {
         task_id: String,
@@ -968,10 +962,7 @@ mod tests {
 
     #[test]
     fn schedule_to_human_interval_hours() {
-        assert_eq!(
-            Schedule::Interval { seconds: 7200 }.to_human(),
-            "Every 2h"
-        );
+        assert_eq!(Schedule::Interval { seconds: 7200 }.to_human(), "Every 2h");
     }
 
     #[test]
@@ -1101,10 +1092,7 @@ mod tests {
 
     #[test]
     fn json_rpc_response_success() {
-        let resp = JsonRpcResponse::success(
-            serde_json::json!(1),
-            serde_json::json!({"ok": true}),
-        );
+        let resp = JsonRpcResponse::success(serde_json::json!(1), serde_json::json!({"ok": true}));
         assert_eq!(resp.jsonrpc, "2.0");
         assert!(resp.result.is_some());
         assert!(resp.error.is_none());
@@ -1128,10 +1116,8 @@ mod tests {
 
     #[test]
     fn json_rpc_response_serde_roundtrip() {
-        let resp = JsonRpcResponse::success(
-            serde_json::json!("req-1"),
-            serde_json::json!({"tasks": []}),
-        );
+        let resp =
+            JsonRpcResponse::success(serde_json::json!("req-1"), serde_json::json!({"tasks": []}));
         let json = serde_json::to_string(&resp).unwrap();
         let roundtrip: JsonRpcResponse = serde_json::from_str(&json).unwrap();
         assert_eq!(roundtrip.jsonrpc, "2.0");

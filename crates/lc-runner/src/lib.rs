@@ -146,11 +146,7 @@ fn try_extract_cost_from_json(json_str: &str) -> Option<(Option<u64>, Option<f64
     // Look for cost_usd at the top level or nested under "result".
     cost = cost.or_else(|| extract_f64(&value, "cost_usd"));
     cost = cost.or_else(|| extract_f64(&value, "total_cost"));
-    cost = cost.or_else(|| {
-        value
-            .get("result")
-            .and_then(|r| extract_f64(r, "cost_usd"))
-    });
+    cost = cost.or_else(|| value.get("result").and_then(|r| extract_f64(r, "cost_usd")));
     cost = cost.or_else(|| {
         value
             .get("result")
@@ -158,11 +154,10 @@ fn try_extract_cost_from_json(json_str: &str) -> Option<(Option<u64>, Option<f64
     });
 
     // Look for token usage.
-    if let Some(usage) = value.get("usage").or_else(|| {
-        value
-            .get("result")
-            .and_then(|r| r.get("usage"))
-    }) {
+    if let Some(usage) = value
+        .get("usage")
+        .or_else(|| value.get("result").and_then(|r| r.get("usage")))
+    {
         let input = extract_u64(usage, "input_tokens").unwrap_or(0);
         let output = extract_u64(usage, "output_tokens").unwrap_or(0);
         if input > 0 || output > 0 {
@@ -307,10 +302,7 @@ mod tests {
 
     #[test]
     fn build_command_claude_with_existing_output_format() {
-        let task = make_task(
-            "claude -p 'Do stuff' --output-format json",
-            None,
-        );
+        let task = make_task("claude -p 'Do stuff' --output-format json", None);
         let argv = build_command(&task);
 
         // Should not duplicate --output-format
@@ -352,10 +344,7 @@ mod tests {
 
     #[test]
     fn build_command_claude_double_quotes() {
-        let task = make_task(
-            r#"claude -p "Review PRs with 'special' chars""#,
-            None,
-        );
+        let task = make_task(r#"claude -p "Review PRs with 'special' chars""#, None);
         let argv = build_command(&task);
 
         assert_eq!(argv[0], "claude");
@@ -397,8 +386,7 @@ mod tests {
 
     #[test]
     fn parse_cost_nested_under_result() {
-        let output =
-            r#"{"result": {"cost_usd": 0.55, "usage": {"input_tokens": 300, "output_tokens": 100}}}"#;
+        let output = r#"{"result": {"cost_usd": 0.55, "usage": {"input_tokens": 300, "output_tokens": 100}}}"#;
         let (tokens, cost, is_estimate) = parse_cost_from_output(output);
 
         assert_eq!(tokens, Some(400));

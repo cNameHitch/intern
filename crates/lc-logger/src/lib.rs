@@ -223,9 +223,7 @@ impl Logger {
         let mut stmt = self.conn.prepare(&sql).context("failed to prepare query")?;
 
         let logs = stmt
-            .query_map(param_refs.as_slice(), |row| {
-                Ok(row_to_execution_log(row))
-            })
+            .query_map(param_refs.as_slice(), |row| Ok(row_to_execution_log(row)))
             .context("failed to execute query")?
             .collect::<std::result::Result<Vec<_>, _>>()
             .context("failed to collect query results")?;
@@ -284,9 +282,7 @@ impl Logger {
         }
 
         // Get cost trend for last 7 days.
-        let cost_trend = self
-            .get_cost_trend(7)
-            .context("failed to get cost trend")?;
+        let cost_trend = self.get_cost_trend(7).context("failed to get cost trend")?;
 
         Ok(DashboardMetrics {
             total_tasks,
@@ -389,7 +385,10 @@ impl Logger {
             )
             .context("failed to prune logs")?;
 
-        info!("Pruned {} log entries older than {} days", deleted, retention_days);
+        info!(
+            "Pruned {} log entries older than {} days",
+            deleted, retention_days
+        );
         Ok(deleted as u64)
     }
 
@@ -419,17 +418,15 @@ impl Logger {
         // Query actual data from the database.
         let mut stmt = self
             .conn
-            .prepare(
-                &format!(
-                    "SELECT DATE(started_at) as date,
+            .prepare(&format!(
+                "SELECT DATE(started_at) as date,
                             COALESCE(SUM(cost_usd), 0.0) as total_cost,
                             COUNT(*) as run_count
                      FROM execution_logs
                      WHERE started_at >= datetime('now', '-{days} days')
                      GROUP BY DATE(started_at)
                      ORDER BY date ASC"
-                ),
-            )
+            ))
             .context("failed to prepare cost trend query")?;
 
         let db_rows: Vec<DailyCost> = stmt
@@ -498,7 +495,10 @@ fn row_to_execution_log(row: &rusqlite::Row<'_>) -> ExecutionLog {
         status,
         stdout: row.get_unwrap(8),
         stderr: row.get_unwrap(9),
-        tokens_used: row.get::<_, Option<i64>>(10).unwrap_or(None).map(|v| v as u64),
+        tokens_used: row
+            .get::<_, Option<i64>>(10)
+            .unwrap_or(None)
+            .map(|v| v as u64),
         cost_usd: row.get_unwrap(11),
         cost_is_estimate: cost_is_estimate_int != 0,
         summary: row.get_unwrap(13),
@@ -767,10 +767,7 @@ mod tests {
     fn dashboard_metrics_aggregation() {
         let (logger, _dir) = test_logger();
 
-        let tasks = vec![
-            sample_task("lc-task0001"),
-            sample_task("lc-task0002"),
-        ];
+        let tasks = vec![sample_task("lc-task0001"), sample_task("lc-task0002")];
 
         // Insert logs for both tasks.
         logger
@@ -798,13 +795,21 @@ mod tests {
 
         assert_eq!(metrics.tasks.len(), 2);
 
-        let task1_metrics = metrics.tasks.iter().find(|m| m.task_id == "lc-task0001").unwrap();
+        let task1_metrics = metrics
+            .tasks
+            .iter()
+            .find(|m| m.task_id == "lc-task0001")
+            .unwrap();
         assert_eq!(task1_metrics.total_runs, 3);
         assert_eq!(task1_metrics.success_count, 2);
         assert_eq!(task1_metrics.fail_count, 1);
         assert!((task1_metrics.total_cost - 3.50).abs() < f64::EPSILON);
 
-        let task2_metrics = metrics.tasks.iter().find(|m| m.task_id == "lc-task0002").unwrap();
+        let task2_metrics = metrics
+            .tasks
+            .iter()
+            .find(|m| m.task_id == "lc-task0002")
+            .unwrap();
         assert_eq!(task2_metrics.total_runs, 1);
         assert_eq!(task2_metrics.success_count, 1);
         assert_eq!(task2_metrics.fail_count, 0);
@@ -913,9 +918,7 @@ mod tests {
         assert_eq!(logger.count_logs().unwrap(), 1);
 
         // The remaining entry should be the recent one.
-        let remaining = logger
-            .query_logs(&LogQuery::default())
-            .unwrap();
+        let remaining = logger.query_logs(&LogQuery::default()).unwrap();
         assert_eq!(remaining.len(), 1);
         assert_eq!(remaining[0].task_id, "lc-task0001");
         assert_ne!(remaining[0].summary, "old");
@@ -1010,9 +1013,7 @@ mod tests {
             logger.insert_log(&log).unwrap();
         }
 
-        let results = logger
-            .query_logs(&LogQuery::default())
-            .unwrap();
+        let results = logger.query_logs(&LogQuery::default()).unwrap();
 
         // Most recent first.
         assert_eq!(results.len(), 3);

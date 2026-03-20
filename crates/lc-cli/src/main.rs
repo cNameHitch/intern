@@ -2,8 +2,8 @@ use anyhow::Context;
 use chrono::{DateTime, Local, Utc};
 use clap::{Parser, Subcommand};
 use lc_core::{
-    CreateTaskInput, DashboardMetrics, DryRunResult, ExecutionLog, JsonRpcRequest,
-    JsonRpcResponse, LcPaths, Schedule, Task, TaskExport, TaskStatus,
+    CreateTaskInput, DashboardMetrics, DryRunResult, ExecutionLog, JsonRpcRequest, JsonRpcResponse,
+    LcPaths, Schedule, Task, TaskExport, TaskStatus,
 };
 use serde_json::json;
 use std::collections::HashMap;
@@ -126,14 +126,9 @@ enum DaemonAction {
 #[derive(Subcommand)]
 enum ConfigAction {
     /// Get a configuration value (or all values if key is omitted)
-    Get {
-        key: Option<String>,
-    },
+    Get { key: Option<String> },
     /// Set a configuration value
-    Set {
-        key: String,
-        value: String,
-    },
+    Set { key: String, value: String },
 }
 
 // ── IPC Client ───────────────────────────────────────────
@@ -144,9 +139,7 @@ async fn send_rpc(method: &str, params: serde_json::Value) -> anyhow::Result<ser
 
     let paths = LcPaths::new();
     let stream = UnixStream::connect(&paths.socket_path).await.map_err(|_| {
-        anyhow::anyhow!(
-            "Loop Commander daemon is not running. Start it with: lc daemon start"
-        )
+        anyhow::anyhow!("Loop Commander daemon is not running. Start it with: lc daemon start")
     })?;
 
     let (reader, mut writer) = stream.into_split();
@@ -225,8 +218,10 @@ fn format_time(dt: &DateTime<Utc>) -> String {
 /// Uses Unicode block characters scaled to the maximum value in the series.
 /// Empty or all-zero input produces a flat line of `\u{2581}` characters.
 fn sparkline(values: &[f64]) -> String {
-    const BLOCKS: [char; 8] = ['\u{2581}', '\u{2582}', '\u{2583}', '\u{2584}',
-                                '\u{2585}', '\u{2586}', '\u{2587}', '\u{2588}'];
+    const BLOCKS: [char; 8] = [
+        '\u{2581}', '\u{2582}', '\u{2583}', '\u{2584}', '\u{2585}', '\u{2586}', '\u{2587}',
+        '\u{2588}',
+    ];
 
     if values.is_empty() {
         return String::new();
@@ -308,10 +303,7 @@ async fn cmd_list() -> anyhow::Result<()> {
 
     for task in &tasks {
         let id = task.id.as_str();
-        let (runs, health) = metrics_map
-            .get(id)
-            .copied()
-            .unwrap_or((0, 100.0));
+        let (runs, health) = metrics_map.get(id).copied().unwrap_or((0, 100.0));
 
         println!(
             "{}  {}  {}  {}  {}  {:.0}%",
@@ -340,8 +332,7 @@ async fn cmd_add(
     let (final_name, final_command, final_schedule, final_working_dir, final_budget, final_tags) =
         if let Some(slug) = template {
             let templates_result = send_rpc("templates.list", json!({})).await?;
-            let templates: Vec<lc_core::TaskTemplate> =
-                serde_json::from_value(templates_result)?;
+            let templates: Vec<lc_core::TaskTemplate> = serde_json::from_value(templates_result)?;
             let tmpl = templates
                 .iter()
                 .find(|t| t.slug == slug)
@@ -398,10 +389,7 @@ async fn cmd_add(
 
     println!(
         "Created task {} \"{}\" ({}, {})",
-        task.id,
-        task.name,
-        task.status,
-        task.schedule_human
+        task.id, task.name, task.status, task.schedule_human
     );
 
     Ok(())
@@ -491,21 +479,13 @@ async fn cmd_run(id: String, dry_run: bool, json_output: bool) -> anyhow::Result
         }
 
         let dr: DryRunResult = serde_json::from_value(result)?;
-        println!(
-            "Dry run for \"{}\" ({}):",
-            dr.task_name, dr.task_id
-        );
-        println!(
-            "  Command:     {}",
-            dr.resolved_command.join(" ")
-        );
+        println!("Dry run for \"{}\" ({}):", dr.task_name, dr.task_id);
+        println!("  Command:     {}", dr.resolved_command.join(" "));
         println!("  Working dir: {}", dr.working_dir);
         println!(
             "  Budget:      {}/run, {} remaining today",
             format_cost(dr.max_budget_per_run),
-            format_cost(
-                (dr.max_budget_per_run * 20.0 - dr.daily_spend_so_far).max(0.0)
-            )
+            format_cost((dr.max_budget_per_run * 20.0 - dr.daily_spend_so_far).max(0.0))
         );
         println!("  Schedule:    {}", dr.schedule_human);
 
@@ -677,16 +657,21 @@ async fn cmd_status() -> anyhow::Result<()> {
     let (active, paused, errored) = match task_result {
         Ok(val) => {
             let tasks: Vec<Task> = serde_json::from_value(val).unwrap_or_default();
-            let a = tasks.iter().filter(|t| t.status == TaskStatus::Active).count();
-            let p = tasks.iter().filter(|t| t.status == TaskStatus::Paused).count();
-            let e = tasks.iter().filter(|t| t.status == TaskStatus::Error).count();
+            let a = tasks
+                .iter()
+                .filter(|t| t.status == TaskStatus::Active)
+                .count();
+            let p = tasks
+                .iter()
+                .filter(|t| t.status == TaskStatus::Paused)
+                .count();
+            let e = tasks
+                .iter()
+                .filter(|t| t.status == TaskStatus::Error)
+                .count();
             (a, p, e)
         }
-        Err(_) => (
-            metrics.active_tasks as usize,
-            0,
-            0,
-        ),
+        Err(_) => (metrics.active_tasks as usize, 0, 0),
     };
 
     // Build status breakdown
@@ -763,7 +748,10 @@ async fn cmd_import(file: String, dry_run: bool) -> anyhow::Result<()> {
         println!("  Command:     {}", export.command);
         println!("  Schedule:    {}", export.schedule_human);
         println!("  Working dir: {}", export.working_dir);
-        println!("  Budget:      {}/run", format_cost(export.max_budget_per_run));
+        println!(
+            "  Budget:      {}/run",
+            format_cost(export.max_budget_per_run)
+        );
         if !export.tags.is_empty() {
             println!("  Tags:        {}", export.tags.join(", "));
         }
@@ -812,12 +800,7 @@ async fn cmd_daemon_start() -> anyhow::Result<()> {
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .spawn()
-        .with_context(|| {
-            format!(
-                "Failed to start daemon binary at {}",
-                daemon_bin.display()
-            )
-        })?;
+        .with_context(|| format!("Failed to start daemon binary at {}", daemon_bin.display()))?;
 
     println!("Daemon started (PID {}).", child.id());
 
@@ -831,8 +814,8 @@ async fn cmd_daemon_stop() -> anyhow::Result<()> {
         anyhow::bail!("No PID file found. Daemon may not be running.");
     }
 
-    let pid_str = std::fs::read_to_string(&paths.pid_file)
-        .context("Failed to read daemon PID file")?;
+    let pid_str =
+        std::fs::read_to_string(&paths.pid_file).context("Failed to read daemon PID file")?;
     let pid: i32 = pid_str
         .trim()
         .parse()
@@ -944,7 +927,11 @@ async fn cmd_daemon_install() -> anyhow::Result<()> {
     // Load via launchctl bootstrap
     let uid = get_uid();
     let bootstrap_result = std::process::Command::new("launchctl")
-        .args(["bootstrap", &format!("gui/{uid}"), &plist_path.to_string_lossy()])
+        .args([
+            "bootstrap",
+            &format!("gui/{uid}"),
+            &plist_path.to_string_lossy(),
+        ])
         .output();
 
     match bootstrap_result {
@@ -1012,9 +999,8 @@ async fn cmd_config_get(key: Option<String>) -> anyhow::Result<()> {
 
 async fn cmd_config_set(key: String, value: String) -> anyhow::Result<()> {
     // Try to parse value as JSON; fall back to string
-    let json_value: serde_json::Value = serde_json::from_str(&value).unwrap_or_else(|_| {
-        serde_json::Value::String(value.clone())
-    });
+    let json_value: serde_json::Value =
+        serde_json::from_str(&value).unwrap_or_else(|_| serde_json::Value::String(value.clone()));
 
     let mut params = serde_json::Map::new();
     params.insert(key.clone(), json_value);
@@ -1049,10 +1035,7 @@ theme: dark
         std::fs::write(&paths.config_file, default_config)?;
         println!("Wrote default config to {}", paths.config_file.display());
     } else {
-        println!(
-            "Config already exists at {}",
-            paths.config_file.display()
-        );
+        println!("Config already exists at {}", paths.config_file.display());
     }
 
     // 3. Print welcome message
@@ -1123,9 +1106,7 @@ fn find_daemon_binary() -> anyhow::Result<std::path::PathBuf> {
         }
     }
 
-    anyhow::bail!(
-        "Cannot find 'loop-commander' binary. Build it with: cargo build -p lc-daemon"
-    );
+    anyhow::bail!("Cannot find 'loop-commander' binary. Build it with: cargo build -p lc-daemon");
 }
 
 /// Get the current user's UID for launchctl commands.
@@ -1216,10 +1197,14 @@ mod tests {
     #[test]
     fn parse_add_minimal() {
         let cli = Cli::parse_from([
-            "lc", "add",
-            "--name", "Test Task",
-            "--command", "echo hello",
-            "--schedule", "*/5 * * * *",
+            "lc",
+            "add",
+            "--name",
+            "Test Task",
+            "--command",
+            "echo hello",
+            "--schedule",
+            "*/5 * * * *",
         ]);
         match cli.command {
             Commands::Add {
@@ -1246,14 +1231,23 @@ mod tests {
     #[test]
     fn parse_add_full() {
         let cli = Cli::parse_from([
-            "lc", "add",
-            "--name", "PR Review",
-            "--command", "claude -p 'Review PRs'",
-            "--schedule", "0 */2 * * *",
-            "--working-dir", "/Users/test/projects",
-            "--budget", "10.0",
-            "--template", "pr-review",
-            "--tags", "review", "automation",
+            "lc",
+            "add",
+            "--name",
+            "PR Review",
+            "--command",
+            "claude -p 'Review PRs'",
+            "--schedule",
+            "0 */2 * * *",
+            "--working-dir",
+            "/Users/test/projects",
+            "--budget",
+            "10.0",
+            "--template",
+            "pr-review",
+            "--tags",
+            "review",
+            "automation",
         ]);
         match cli.command {
             Commands::Add {
@@ -1271,7 +1265,10 @@ mod tests {
                 assert_eq!(working_dir, "/Users/test/projects");
                 assert_eq!(budget, Some(10.0));
                 assert_eq!(template, Some("pr-review".to_string()));
-                assert_eq!(tags, Some(vec!["review".to_string(), "automation".to_string()]));
+                assert_eq!(
+                    tags,
+                    Some(vec!["review".to_string(), "automation".to_string()])
+                );
             }
             _ => panic!("Expected Add command"),
         }
@@ -1280,9 +1277,13 @@ mod tests {
     #[test]
     fn parse_edit() {
         let cli = Cli::parse_from([
-            "lc", "edit", "lc-abc12345",
-            "--name", "New Name",
-            "--schedule", "*/10 * * * *",
+            "lc",
+            "edit",
+            "lc-abc12345",
+            "--name",
+            "New Name",
+            "--schedule",
+            "*/10 * * * *",
         ]);
         match cli.command {
             Commands::Edit {
@@ -1408,9 +1409,13 @@ mod tests {
     #[test]
     fn parse_logs_with_args() {
         let cli = Cli::parse_from([
-            "lc", "logs", "lc-abc12345",
-            "--limit", "50",
-            "--status", "failed",
+            "lc",
+            "logs",
+            "lc-abc12345",
+            "--limit",
+            "50",
+            "--status",
+            "failed",
             "--follow",
         ]);
         match cli.command {
@@ -1603,7 +1608,11 @@ mod tests {
         assert_eq!(chars[7], '\u{2588}');
         // Verify strictly non-decreasing
         for i in 0..7 {
-            assert!(chars[i] <= chars[i + 1], "Block at {i} should be <= block at {}", i + 1);
+            assert!(
+                chars[i] <= chars[i + 1],
+                "Block at {i} should be <= block at {}",
+                i + 1
+            );
         }
     }
 
@@ -1621,7 +1630,7 @@ mod tests {
         assert_eq!(chars.len(), 3);
         assert_eq!(chars[0], '\u{2581}'); // 0 -> lowest
         assert_eq!(chars[1], '\u{2588}'); // 10 -> highest
-        // 5/10 = 0.5 -> index round(0.5*7) = round(3.5) = 4 -> BLOCKS[4] = \u{2585}
+                                          // 5/10 = 0.5 -> index round(0.5*7) = round(3.5) = 4 -> BLOCKS[4] = \u{2585}
         assert_eq!(chars[2], '\u{2585}');
     }
 
