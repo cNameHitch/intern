@@ -40,5 +40,8 @@ dist/
 *.zip
 *.dmg
 
+# Internal docs and specs
+docs/
+
 # Claude Code internal state
 .claude/
