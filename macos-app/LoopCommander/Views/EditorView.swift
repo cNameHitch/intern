@@ -7,6 +7,7 @@ struct EditorView: View {
     @State private var tagInput: String = ""
     @State private var discoveredCommands: [ClaudeCommand] = []
     @State private var skillSearchText: String = ""
+    @State private var showPreview: Bool = false
 
     private var filteredCommands: [ClaudeCommand] {
         if skillSearchText.isEmpty { return discoveredCommands }
@@ -28,6 +29,7 @@ struct EditorView: View {
             }
         }
         .onChange(of: vm.editorState) { newState in
+            showPreview = false
             if newState == .empty {
                 discoveredCommands = CommandScanner.scan()
                 Task { await taskListVM.loadTasks() }
@@ -460,18 +462,21 @@ struct EditorView: View {
                     .tracking(0.5)
                     .textCase(.uppercase)
                 Spacer()
-                Text("\(vm.draft.command.count) chars")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(.lcTextMuted)
+                previewToggle
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
 
-            LCTextEditor(
-                text: $vm.draft.command,
-                placeholder: "claude -p 'Your prompt here...'"
-            )
-            .frame(maxHeight: .infinity)
+            if showPreview {
+                MarkdownPreviewView(text: vm.draft.command)
+                    .frame(maxHeight: .infinity)
+            } else {
+                LCTextEditor(
+                    text: $vm.draft.command,
+                    placeholder: "claude -p 'Your prompt here...'"
+                )
+                .frame(maxHeight: .infinity)
+            }
 
             Rectangle()
                 .fill(Color.lcBorder)
@@ -486,6 +491,42 @@ struct EditorView: View {
             .padding(.horizontal, 12)
         }
         .background(Color.lcBackground)
+    }
+
+    // MARK: - Preview Toggle
+
+    private var previewToggle: some View {
+        HStack(spacing: 0) {
+            toggleSegment(label: "Code", isActive: !showPreview) {
+                showPreview = false
+            }
+            toggleSegment(label: "Preview", isActive: showPreview) {
+                showPreview = true
+            }
+        }
+        .background(Color.lcCodeBackground)
+        .cornerRadius(LCRadius.filter)
+        .overlay(
+            RoundedRectangle(cornerRadius: LCRadius.filter)
+                .stroke(Color.lcBorderInput, lineWidth: 1)
+        )
+    }
+
+    private func toggleSegment(
+        label: String,
+        isActive: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.lcButtonSmall)
+                .foregroundColor(isActive ? .lcAccentLight : .lcTextMuted)
+                .padding(.vertical, 5)
+                .padding(.horizontal, 10)
+                .background(isActive ? Color.lcAccentBg : Color.clear)
+                .cornerRadius(LCRadius.filter)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Settings Pane
