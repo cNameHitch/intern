@@ -43,7 +43,7 @@ struct DaemonBanner: View {
             if connected {
                 showBanner = false
             } else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
                     if !isConnected {
                         showBanner = true
                     }
