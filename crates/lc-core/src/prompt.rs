@@ -491,20 +491,15 @@ pub const OPTIMIZATION_META_PROMPT: &str =
 // ── Optimization Types ──────────────────────────────────
 
 /// Which aspect of the prompt to focus the optimization on.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum OptimizationFocus {
     Efficiency,
     Quality,
     Consistency,
     Resilience,
+    #[default]
     All,
-}
-
-impl Default for OptimizationFocus {
-    fn default() -> Self {
-        Self::All
-    }
 }
 
 impl std::fmt::Display for OptimizationFocus {
