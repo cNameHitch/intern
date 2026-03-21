@@ -14,7 +14,7 @@ class DaemonMonitor: ObservableObject {
     private let maxReconnectDelay: TimeInterval = 30.0
     private var started = false
     private var consecutiveFailures = 0
-    private let maxConsecutiveFailures = 5
+    private let maxConsecutiveFailures = 10
 
     init(client: DaemonClient) {
         self.client = client
@@ -58,6 +58,13 @@ class DaemonMonitor: ObservableObject {
                     // Ping daemon — tolerate transient failures before disconnecting
                     do {
                         let _: DaemonStatus = try await client.call("daemon.status")
+                        consecutiveFailures = 0
+                    } catch DaemonClientError.timeout {
+                        // Timeout means the daemon is busy but the connection may
+                        // still be alive. Don't count this as a real failure.
+                        continue
+                    } catch DaemonClientError.rpcError {
+                        // RPC errors mean the daemon responded — connection is fine.
                         consecutiveFailures = 0
                     } catch {
                         consecutiveFailures += 1
