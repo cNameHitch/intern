@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="loop-logo.png" alt="Intern" width="128" height="128">
+  <img src="intern-logo.png" alt="Intern" width="128" height="128">
 </p>
 
 <h1 align="center">Intern</h1>
