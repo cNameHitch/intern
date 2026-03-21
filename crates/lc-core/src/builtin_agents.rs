@@ -827,19 +827,39 @@ mod tests {
     #[test]
     fn builtin_agents_not_empty() {
         let agents = builtin_agents();
-        assert!(agents.len() > 100, "Expected 100+ agents, got {}", agents.len());
+        assert!(
+            agents.len() > 100,
+            "Expected 100+ agents, got {}",
+            agents.len()
+        );
     }
 
     #[test]
     fn builtin_agents_have_valid_slugs() {
         for agent in builtin_agents() {
             assert!(!agent.slug.is_empty(), "Empty slug found");
-            assert!(!agent.name.is_empty(), "Empty name for slug: {}", agent.slug);
-            assert!(!agent.description.is_empty(), "Empty description for slug: {}", agent.slug);
-            assert!(!agent.category.is_empty(), "Empty category for slug: {}", agent.slug);
             assert!(
-                agent.slug.chars().all(|c| c.is_ascii_lowercase() || c == '-' || c.is_ascii_digit()),
-                "Invalid slug: {}", agent.slug
+                !agent.name.is_empty(),
+                "Empty name for slug: {}",
+                agent.slug
+            );
+            assert!(
+                !agent.description.is_empty(),
+                "Empty description for slug: {}",
+                agent.slug
+            );
+            assert!(
+                !agent.category.is_empty(),
+                "Empty category for slug: {}",
+                agent.slug
+            );
+            assert!(
+                agent
+                    .slug
+                    .chars()
+                    .all(|c| c.is_ascii_lowercase() || c == '-' || c.is_ascii_digit()),
+                "Invalid slug: {}",
+                agent.slug
             );
         }
     }

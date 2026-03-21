@@ -1111,10 +1111,7 @@ async fn cmd_generate(
 
     let result = send_rpc("prompt.generate", params).await?;
 
-    let name = result
-        .get("name")
-        .and_then(|v| v.as_str())
-        .unwrap_or("-");
+    let name = result.get("name").and_then(|v| v.as_str()).unwrap_or("-");
     let description = result
         .get("description")
         .and_then(|v| v.as_str())
@@ -1143,10 +1140,7 @@ async fn cmd_generate(
         .get("saved_to")
         .and_then(|v| v.as_str())
         .unwrap_or("-");
-    let command = result
-        .get("command")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let command = result.get("command").and_then(|v| v.as_str()).unwrap_or("");
 
     println!("{}  {}", pad("Generated prompt:", 18), name);
     println!("{}  {}", pad("Description:", 18), description);
@@ -1216,10 +1210,7 @@ async fn cmd_agents_list(category: Option<String>) -> anyhow::Result<()> {
 
 async fn cmd_agents_refresh() -> anyhow::Result<()> {
     let result = send_rpc("registry.refresh", json!({})).await?;
-    let count = result
-        .get("count")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0);
+    let count = result.get("count").and_then(|v| v.as_u64()).unwrap_or(0);
     println!("Registry refreshed. {count} agents available.");
     Ok(())
 }

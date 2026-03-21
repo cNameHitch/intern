@@ -157,20 +157,13 @@ async fn build_success_response(
     registry_mgr: &RegistryManager,
 ) -> JsonRpcResponse {
     // Generate or reuse task ID
-    let task_id = input
-        .task_id
-        .clone()
-        .unwrap_or_else(|| TaskId::new().0);
+    let task_id = input.task_id.clone().unwrap_or_else(|| TaskId::new().0);
 
     // 5. Save to disk
     let prompt_path = match registry_mgr.save_prompt(&task_id, raw_content) {
         Ok(p) => p,
         Err(e) => {
-            return JsonRpcResponse::error(
-                id,
-                -32603,
-                format!("Failed to save prompt file: {e}"),
-            );
+            return JsonRpcResponse::error(id, -32603, format!("Failed to save prompt file: {e}"));
         }
     };
 
@@ -226,10 +219,7 @@ pub async fn handle_registry_refresh(
 ///
 /// Returns the cached agent list. If the cache is stale, triggers a background
 /// refresh but returns the current cache immediately.
-pub async fn handle_registry_list(
-    id: serde_json::Value,
-    state: &SharedState,
-) -> JsonRpcResponse {
+pub async fn handle_registry_list(id: serde_json::Value, state: &SharedState) -> JsonRpcResponse {
     let registry_mgr = {
         let cfg = state.config.lock().await;
         RegistryManager::new(&cfg.paths().root)
@@ -317,10 +307,7 @@ mod tests {
         let params: GenerateParams = serde_json::from_value(json).unwrap();
         assert_eq!(params.intent, "Review PRs for security issues");
         assert_eq!(params.agents.len(), 2);
-        assert_eq!(
-            params.working_dir,
-            Some("/Users/test/project".to_string())
-        );
+        assert_eq!(params.working_dir, Some("/Users/test/project".to_string()));
         assert!(!params.regenerate);
         assert!(params.feedback.is_none());
     }

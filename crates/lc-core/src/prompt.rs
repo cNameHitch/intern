@@ -401,7 +401,8 @@ pub fn validate_generated_prompt(
             .chars()
             .all(|c| c.is_ascii_lowercase() || c == '-' || c.is_ascii_digit())
         {
-            errors.push("name: must be kebab-case (lowercase letters, digits, hyphens only)".into());
+            errors
+                .push("name: must be kebab-case (lowercase letters, digits, hyphens only)".into());
         }
     }
 
@@ -637,10 +638,7 @@ It has enough content to pass the length check but contains forbidden patterns."
 
         let (validation, _) = validate_generated_prompt(content, &[]);
         assert!(!validation.is_valid);
-        assert!(validation
-            .errors
-            .iter()
-            .any(|e| e.contains("placeholder")));
+        assert!(validation.errors.iter().any(|e| e.contains("placeholder")));
     }
 
     #[test]
@@ -657,10 +655,7 @@ It has enough content to pass the length check but contains interactive patterns
 
         let (validation, _) = validate_generated_prompt(content, &[]);
         assert!(!validation.is_valid);
-        assert!(validation
-            .errors
-            .iter()
-            .any(|e| e.contains("interactive")));
+        assert!(validation.errors.iter().any(|e| e.contains("interactive")));
     }
 
     #[test]
@@ -768,8 +763,7 @@ A Markdown report listing all findings.
         assert_eq!(parsed.tags, vec!["test", "roundtrip"]);
         assert_eq!(parsed.agents, vec!["code-reviewer"]);
 
-        let (validation, _) =
-            validate_generated_prompt(content, &["code-reviewer".to_string()]);
+        let (validation, _) = validate_generated_prompt(content, &["code-reviewer".to_string()]);
         assert!(validation.is_valid, "Errors: {:?}", validation.errors);
     }
 
@@ -805,10 +799,8 @@ A Markdown report listing all findings.
             ],
         };
 
-        let found = registry.lookup_agents(&[
-            "security-auditor".to_string(),
-            "nonexistent".to_string(),
-        ]);
+        let found =
+            registry.lookup_agents(&["security-auditor".to_string(), "nonexistent".to_string()]);
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].slug, "security-auditor");
     }

@@ -310,8 +310,7 @@ fn parse_list_item(item: &str, category: &str) -> Option<AgentEntry> {
             let inner = &item[1..close_bracket];
             if let Some(close_paren) = item[close_bracket..].find(')') {
                 let rest = &item[close_bracket + close_paren + 1..];
-                &format!("{inner}{rest}")
-                    .leak() // Safe in this context: small allocations during parsing
+                &format!("{inner}{rest}").leak() // Safe in this context: small allocations during parsing
             } else {
                 item
             }
@@ -490,7 +489,10 @@ Please submit a PR.
         let agents = parse_agent_readme(readme);
         assert_eq!(agents.len(), 3);
 
-        let auditor = agents.iter().find(|a| a.slug == "security-auditor").unwrap();
+        let auditor = agents
+            .iter()
+            .find(|a| a.slug == "security-auditor")
+            .unwrap();
         assert_eq!(auditor.category, "security");
         assert_eq!(auditor.description, "Performs security audits on codebases");
 
