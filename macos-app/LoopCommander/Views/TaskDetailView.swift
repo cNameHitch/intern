@@ -221,7 +221,6 @@ struct TaskDetailView: View {
                     metadataRow(label: "Cron", value: task.schedule.cronExpression ?? "\u{2014}")
                     metadataRow(label: "Working Dir", value: task.workingDir)
                     metadataRow(label: "Skill", value: task.skill ?? "\u{2014}")
-                    metadataRow(label: "Budget/Run", value: formatCost(task.maxBudgetPerRun))
                     metadataRow(label: "Total Spent", value: formatCost(task.totalCost))
                     metadataRow(label: "Created", value: relativeTime(task.createdAt))
                     metadataRow(label: "Last Run", value: task.lastRun.map { relativeTime($0) } ?? "\u{2014}")
@@ -372,7 +371,6 @@ struct TaskDetailView: View {
             }
 
             HStack(spacing: 20) {
-                metadataRow(label: "Budget/Run", value: formatCost(result.maxBudgetPerRun))
                 metadataRow(label: "Daily Spend", value: formatCost(result.dailySpendSoFar))
             }
 
